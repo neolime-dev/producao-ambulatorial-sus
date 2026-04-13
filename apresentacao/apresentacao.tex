@@ -1,0 +1,646 @@
+% ==========================================================
+% APRESENTAÇÃO - PRODUÇÃO AMBULATORIAL (SIA/SUS)
+% IESB - Beamer Presentation (15 slides)
+% ==========================================================
+
+\documentclass[aspectratio=169,10pt]{beamer}
+
+% ----------------------------------------------------------
+% TEMA E CORES
+% ----------------------------------------------------------
+\usetheme{Madrid}
+\usecolortheme{seahorse}
+
+\definecolor{iesbBlue}{RGB}{27,79,114}
+\definecolor{iesbLightBlue}{RGB}{46,134,193}
+\definecolor{iesbRed}{RGB}{170,0,0}
+
+\setbeamercolor{palette primary}{bg=iesbBlue,fg=white}
+\setbeamercolor{palette secondary}{bg=iesbLightBlue,fg=white}
+\setbeamercolor{palette tertiary}{bg=iesbBlue,fg=white}
+\setbeamercolor{structure}{fg=iesbBlue}
+\setbeamercolor{title}{fg=white,bg=iesbBlue}
+\setbeamercolor{frametitle}{fg=white,bg=iesbBlue}
+\setbeamercolor{block title}{bg=iesbBlue,fg=white}
+\setbeamercolor{block body}{bg=iesbBlue!10}
+\setbeamercolor{item}{fg=iesbBlue}
+
+% Remover botões de navegação
+\setbeamertemplate{navigation symbols}{}
+
+% Número de slides
+\setbeamertemplate{footline}{
+    \leavevmode%
+    \hbox{%
+    \begin{beamercolorbox}[wd=.33\paperwidth,ht=2.25ex,dp=1ex,center]{author in head/foot}%
+        \usebeamerfont{author in head/foot}\insertshortauthor
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.34\paperwidth,ht=2.25ex,dp=1ex,center]{title in head/foot}%
+        \usebeamerfont{title in head/foot}\insertshorttitle
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.33\paperwidth,ht=2.25ex,dp=1ex,right]{date in head/foot}%
+        \usebeamerfont{date in head/foot}\insertshortdate{}\hspace*{2em}
+        \insertframenumber{} / \inserttotalframenumber\hspace*{2ex}
+    \end{beamercolorbox}}%
+    \vskip0pt%
+}
+
+% ----------------------------------------------------------
+% PACOTES
+% ----------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{tikz}
+\usepackage{fontawesome5}
+\usepackage{amsmath}
+
+\lstset{
+    basicstyle=\ttfamily\tiny,
+    frame=single,
+    breaklines=true,
+    backgroundcolor=\color{gray!10}
+}
+
+% ----------------------------------------------------------
+% DADOS
+% ----------------------------------------------------------
+\title[Produção Ambulatorial SIA/SUS]{Análise da Produção Ambulatorial do SUS}
+\subtitle{Extração, Armazenamento e Visualização de Dados do SIA/SUS}
+\author[Matheus L. Ribeiro]{Matheus Lima Ribeiro}
+\institute[IESB]{
+    Centro Universitário IESB\\
+    Ciência de Dados e Inteligência Artificial\\
+    \medskip
+    \textit{Integração de Técnicas e Projeto de Sistemas Inteligentes}\\
+    Prof. Sérgio da Costa Côrtes
+}
+\date{Abril de 2026}
+
+% ==========================================================
+\begin{document}
+
+% ----------------------------------------------------------
+% SLIDE 1: TÍTULO
+% ----------------------------------------------------------
+\begin{frame}
+\titlepage
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 2: SUMÁRIO
+% ----------------------------------------------------------
+\begin{frame}{Sumário}
+\tableofcontents
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 3: INTRODUÇÃO - O SUS E O SIA
+% ----------------------------------------------------------
+\section{Introdução}
+\begin{frame}{O SUS e o Sistema de Informações Ambulatoriais}
+
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+    \begin{itemize}
+        \item \textbf{SUS}: Maior sistema público de saúde do mundo
+        \item Atende $\sim$190 milhões de brasileiros
+        \item \textbf{SIA/SUS}: Registra toda a produção ambulatorial
+        \begin{itemize}
+            \item Consultas, exames, terapias
+            \item Procedimentos cirúrgicos ambulatoriais
+        \end{itemize}
+        \item \textbf{DATASUS/TabNet}: Portal de acesso aos dados
+    \end{itemize}
+\end{column}
+\begin{column}{0.4\textwidth}
+    \begin{block}{Dados do Projeto}
+        \begin{itemize}
+            \item \textbf{Período}: Jan/2024 -- Jan/2026
+            \item \textbf{Meses}: 25
+            \item \textbf{Abrangência}: Nacional
+            \item \textbf{Granularidade}: Município
+        \end{itemize}
+    \end{block}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 4: OBJETIVOS
+% ----------------------------------------------------------
+\begin{frame}{Objetivos do Projeto}
+
+\begin{block}{Objetivo Geral}
+Desenvolver um sistema integrado para extração, armazenamento e visualização de dados de Produção Ambulatorial do SIA/SUS.
+\end{block}
+
+\vspace{0.5cm}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{alertblock}{Objetivos Específicos}
+    \begin{enumerate}
+        \item Extrator HTTP puro (Requests + Regex)
+        \item Banco de dados estruturado (SQLite)
+        \item Aplicação web interativa (Streamlit)
+    \end{enumerate}
+    \end{alertblock}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{exampleblock}{Entregas}
+    \begin{enumerate}
+        \item[4.] Estatísticas descritivas e gráficos
+        \item[5.] Relatório técnico (LaTeX)
+        \item[6.] Apresentação (Beamer)
+    \end{enumerate}
+    \end{exampleblock}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 5: METODOLOGIA - ARQUITETURA
+% ----------------------------------------------------------
+\section{Metodologia}
+\begin{frame}{Arquitetura do Sistema}
+
+\begin{center}
+\begin{tikzpicture}[
+    box/.style={rectangle, draw=iesbBlue, fill=iesbBlue!10, thick, minimum height=1.2cm, minimum width=2.8cm, text centered, rounded corners=3pt, font=\small},
+    arrow/.style={->, thick, iesbBlue}
+]
+
+% Nodes
+\node[box, fill=iesbRed!15, draw=iesbRed] (tabnet) at (0,0) {DATASUS\\TabNet};
+\node[box] (scraper) at (4,0) {Web Scraper\\(Python Requests)};
+\node[box] (csv) at (8,0) {CSVs\\(Dados brutos)};
+\node[box] (etl) at (8,-2.5) {Pipeline\\ETL};
+\node[box] (db) at (4,-2.5) {SQLite\\(Banco)};
+\node[box, fill=green!10, draw=green!50!black] (streamlit) at (0,-2.5) {Streamlit\\(Dashboard)};
+
+% Arrows
+\draw[arrow] (tabnet) -- (scraper);
+\draw[arrow] (scraper) -- (csv);
+\draw[arrow] (csv) -- (etl);
+\draw[arrow] (etl) -- (db);
+\draw[arrow] (db) -- (streamlit);
+
+% Labels
+\node[font=\tiny, above] at (2,0.1) {HTTP/POST};
+\node[font=\tiny, above] at (6,0.1) {CSV (;)};
+\node[font=\tiny, right] at (8.1,-1.25) {Pandas};
+\node[font=\tiny, above] at (6,-2.4) {SQL};
+\node[font=\tiny, above] at (2,-2.4) {Consultas};
+
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.3cm}
+\begin{itemize}
+    \item \textbf{3 camadas}: Extração $\rightarrow$ Armazenamento $\rightarrow$ Apresentação
+    \item Pipeline automatizado e reprodutível
+\end{itemize}
+
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 6: METODOLOGIA - EXTRAÇÃO
+% ----------------------------------------------------------
+\begin{frame}{Metodologia: Robô de Extração}
+
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+    \textbf{Parâmetros da Extração:}
+    \vspace{0.2cm}
+    \begin{tabular}{ll}
+    \toprule
+    \textbf{Campo} & \textbf{Valor} \\
+    \midrule
+    Linha & Município \\
+    Coluna & Subgrupo proced. \\
+    Conteúdo & Qtd./Valor Aprovado \\
+    Período & 25 meses \\
+    Formato & CSV (;) \\
+    \bottomrule
+    \end{tabular}
+\end{column}
+\begin{column}{0.42\textwidth}
+    \begin{block}{Engenharia e Resiliência}
+    \begin{itemize}
+        \item[\faRedo] Extração reversa de sessão do DATASUS
+        \item[\faKey] Descoberta Regex dos tokens internos
+        \item[\faShieldAlt] Re-encoding forçado ISO-8859-1 (Latin-1)
+        \item[\faBolt] Zero timeouts vs Lentidão de browsers!
+        \item[\faFileAlt] Headers Customizados do Client
+    \end{itemize}
+    \end{block}
+\end{column}
+\end{columns}
+
+\vspace{0.3cm}
+\begin{center}
+\textbf{50 extrações} = 25 meses $\times$ 2 conteúdos (Quantidade + Valor)
+\end{center}
+
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 7: METODOLOGIA - BANCO DE DADOS
+% ----------------------------------------------------------
+\begin{frame}{Metodologia: Banco de Dados}
+
+\begin{columns}[T]
+\begin{column}{0.55\textwidth}
+    \textbf{Tabela: producao\_ambulatorial}
+    \vspace{0.2cm}
+
+    \begin{tabular}{ll}
+    \toprule
+    \textbf{Campo} & \textbf{Tipo} \\
+    \midrule
+    id & INTEGER (PK) \\
+    municipio & TEXT \\
+    codigo\_municipio & TEXT \\
+    uf & TEXT \\
+    regiao & TEXT \\
+    subgrupo\_proced. & TEXT \\
+    periodo & TEXT \\
+    qtd\_aprovada & INTEGER \\
+    valor\_aprovado & REAL \\
+    \bottomrule
+    \end{tabular}
+\end{column}
+\begin{column}{0.42\textwidth}
+    \begin{block}{Pipeline ETL}
+    \begin{enumerate}
+        \item Leitura dos CSVs
+        \item Limpeza e normalização
+        \item Enriquecimento (UF, Região)
+        \item Carga no SQLite
+        \item Consolidação Qtd+Valor
+    \end{enumerate}
+    \end{block}
+
+    \vspace{0.3cm}
+    \begin{alertblock}{Índices}
+    município, uf, região, subgrupo, período
+    \end{alertblock}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 8: METODOLOGIA - STREAMLIT
+% ----------------------------------------------------------
+\begin{frame}{Metodologia: Aplicação Streamlit}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{block}{\faHome\ Dashboard}
+    \begin{itemize}
+        \item KPIs principais
+        \item Evolução temporal
+        \item Distribuição regional
+        \item Filtros globais na sidebar
+    \end{itemize}
+    \end{block}
+
+    \begin{block}{\faList\ Lista de Dados}
+    \begin{itemize}
+        \item Tabela interativa paginada
+        \item Busca por município
+        \item Exportação CSV
+    \end{itemize}
+    \end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{block}{\faChartBar\ Estatísticas}
+    \begin{itemize}
+        \item Tendência central
+        \item Dispersão e quartis
+        \item Histogramas
+        \item Análise por dimensão
+    \end{itemize}
+    \end{block}
+
+    \begin{block}{\faChartArea\ Gráficos (9 tipos)}
+    Barras, Linhas, Pizza, Heatmap,
+    Box Plot, Treemap, Dispersão,
+    Área Empilhada, Barras Agrupadas
+    \end{block}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDES 9-12: RESULTADOS
+% ----------------------------------------------------------
+\section{Resultados}
+\begin{frame}{Resultados: Visão Geral}
+
+\begin{center}
+\begin{tikzpicture}
+    % KPI boxes
+    \node[rectangle, draw=iesbBlue, fill=iesbBlue!10, rounded corners, minimum width=3.5cm, minimum height=1.8cm, text centered] (k1) at (0,0) {
+        \textbf{\large 50}\\
+        \small Extrações realizadas
+    };
+    \node[rectangle, draw=iesbLightBlue, fill=iesbLightBlue!10, rounded corners, minimum width=3.5cm, minimum height=1.8cm, text centered] (k2) at (4.5,0) {
+        \textbf{\large 25}\\
+        \small Meses de dados
+    };
+    \node[rectangle, draw=green!60!black, fill=green!10, rounded corners, minimum width=3.5cm, minimum height=1.8cm, text centered] (k3) at (9,0) {
+        \textbf{\large 5.570+}\\
+        \small Municípios
+    };
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{block}{Extração}
+    \begin{itemize}
+        \item Quantidade Aprovada: \checkmark
+        \item Valor Aprovado: \checkmark
+        \item Período: Jan/2024 -- Jan/2026
+        \item Formato: CSV (;)
+    \end{itemize}
+    \end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{block}{Banco de Dados}
+    \begin{itemize}
+        \item SQLite: Configuração zero
+        \item Índices otimizados
+        \item Views de agregação
+        \item Metadados de extração
+    \end{itemize}
+    \end{block}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ----------------------------------------------------------
+\begin{frame}{Resultados: Distribuição Regional}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{block}{Concentração da Produção}
+    \begin{itemize}
+        \item \textbf{Sudeste}: Maior volume de produção ambulatorial, refletindo a concentração populacional e da rede assistencial
+        \item \textbf{Nordeste}: Segunda maior produção
+        \item \textbf{Sul}: Terceira posição
+        \item \textbf{Centro-Oeste e Norte}: Menores volumes
+    \end{itemize}
+    \end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{alertblock}{Principais Observações}
+    \begin{itemize}
+        \item Distribuição correlacionada com população
+        \item Disparidades regionais evidentes
+        \item Diferenças nos subgrupos predominantes por região
+        \item Variações temporais identificáveis
+    \end{itemize}
+    \end{alertblock}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ----------------------------------------------------------
+\begin{frame}{Resultados: Evolução Temporal}
+
+\begin{block}{Análise Temporal (Jan/2024 -- Jan/2026)}
+\begin{itemize}
+    \item Tendência geral da quantidade aprovada ao longo do período
+    \item Variações sazonais identificáveis (reduções em períodos de férias, feriados)
+    \item Acompanhamento do valor aprovado permite análise financeira
+    \item Dados recentes podem estar sujeitos a atualizações pelo Ministério da Saúde
+\end{itemize}
+\end{block}
+
+\vspace{0.3cm}
+
+\begin{exampleblock}{Tipos de Gráficos Temporais}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{itemize}
+        \item Linha: evolução global
+        \item Área empilhada: por região
+    \end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{itemize}
+        \item Barras: comparação mensal
+        \item Tabelas: valores exatos
+    \end{itemize}
+\end{column}
+\end{columns}
+\end{exampleblock}
+
+\end{frame}
+
+% ----------------------------------------------------------
+\begin{frame}{Resultados: Estatísticas Descritivas}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{block}{Medidas Calculadas}
+    \begin{tabular}{ll}
+    \toprule
+    \textbf{Medida} & \textbf{Tipo} \\
+    \midrule
+    Média & Tendência central \\
+    Mediana & Tendência central \\
+    Moda & Tendência central \\
+    Desvio Padrão & Dispersão \\
+    Variância & Dispersão \\
+    Amplitude & Dispersão \\
+    Coef. Variação & Dispersão \\
+    Q1, Q2, Q3 & Quartis \\
+    IQR & Quartis \\
+    Skewness & Forma \\
+    Kurtosis & Forma \\
+    \bottomrule
+    \end{tabular}
+    \end{block}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{block}{Segmentações}
+    Estatísticas calculadas para:
+    \begin{itemize}
+        \item Dados globais
+        \item Por Região
+        \item Por UF (Top 10)
+        \item Por Subgrupo (Top 15)
+        \item Por Período (temporal)
+    \end{itemize}
+    \end{block}
+
+    \begin{alertblock}{Visualização}
+    \begin{itemize}
+        \item Histogramas com média/mediana
+        \item Box plots por região
+        \item Tabelas resumo
+    \end{itemize}
+    \end{alertblock}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 13: BANCO DE DADOS
+% ----------------------------------------------------------
+\section{Banco de Dados}
+\begin{frame}{Banco de Dados: Detalhes}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+    \begin{block}{Estrutura}
+    \begin{itemize}
+        \item \textbf{Tabela principal}: producao\_ambulatorial
+        \item \textbf{Metadados}: extracao\_metadata
+        \item \textbf{Views}: vw\_producao\_por\_uf, vw\_producao\_por\_regiao
+    \end{itemize}
+    \end{block}
+
+    \begin{exampleblock}{Consulta Exemplo}
+    \begin{lstlisting}[language=SQL]
+SELECT uf, regiao,
+  SUM(quantidade_aprovada) as qtd,
+  SUM(valor_aprovado) as valor
+FROM producao_ambulatorial
+GROUP BY uf, regiao
+ORDER BY qtd DESC
+LIMIT 10;
+    \end{lstlisting}
+    \end{exampleblock}
+\end{column}
+\begin{column}{0.48\textwidth}
+    \begin{block}{Escolha do SQLite}
+    \begin{itemize}
+        \item[\faCheck] Configuração zero
+        \item[\faCheck] Arquivo único portátil
+        \item[\faCheck] SQL completo
+        \item[\faCheck] Integração Python nativa
+        \item[\faCheck] Performance adequada
+    \end{itemize}
+    \end{block}
+
+    \begin{alertblock}{Índices Criados}
+    \begin{itemize}
+        \item municipio
+        \item uf, regiao
+        \item subgrupo\_procedimento
+        \item periodo
+        \item (uf, periodo) -- composto
+    \end{itemize}
+    \end{alertblock}
+\end{column}
+\end{columns}
+
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 14: CONCLUSÕES
+% ----------------------------------------------------------
+\section{Conclusões}
+\begin{frame}{Conclusões}
+
+\begin{block}{Contribuições do Projeto}
+\begin{enumerate}
+    \item \textbf{Automação Reversa}: Extrator HTTP supera em 10x a lentidão de navegadores no TabNet.
+    \item \textbf{Estruturação}: Pipeline ETL transforma dados brutos em base consultável
+    \item \textbf{Acessibilidade}: Dashboard Streamlit democratiza o acesso à informação
+    \item \textbf{Integração}: Projeto une web scraping, banco de dados, análise e visualização
+\end{enumerate}
+\end{block}
+
+\vspace{0.3cm}
+
+\begin{exampleblock}{Trabalhos Futuros}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{itemize}
+    \item Modelos de Machine Learning para previsão
+    \item Migração para PostgreSQL
+    \item Integração com SIH/SUS e CNES
+\end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+\begin{itemize}
+    \item Deploy em nuvem
+    \item Análise geoespacial
+    \item Alertas automatizados
+\end{itemize}
+\end{column}
+\end{columns}
+\end{exampleblock}
+
+\end{frame}
+
+% ----------------------------------------------------------
+% SLIDE 15: REFERÊNCIAS
+% ----------------------------------------------------------
+\section{Referências}
+\begin{frame}{Referências}
+
+\begin{thebibliography}{9}
+\setbeamertemplate{bibliography item}[text]
+
+\bibitem{datasus} DATASUS. \textit{Departamento de Informática do SUS}. Disponível em: \url{https://datasus.saude.gov.br}. Acesso em: abr. 2026.
+
+\bibitem{siasus} MINISTÉRIO DA SAÚDE. \textit{Sistema de Informações Ambulatoriais do SUS (SIA/SUS)}. 2026.
+
+\bibitem{tabnet} DATASUS. \textit{TabNet -- Informações de Saúde}. Disponível em: \url{https://datasus.saude.gov.br/informacoes-de-saude-tabnet/}. Acesso em: abr. 2026.
+
+\bibitem{selenium} Selenium. \textit{Selenium Documentation}. Disponível em: \url{https://www.selenium.dev}. Acesso em: abr. 2026.
+
+\bibitem{streamlit} Streamlit. \textit{Streamlit Documentation}. Disponível em: \url{https://docs.streamlit.io}. Acesso em: abr. 2026.
+
+\bibitem{mitchell} MITCHELL, R. \textit{Web Scraping with Python}. O'Reilly Media, 2018.
+
+\bibitem{paim} PAIM, J. et al. The Brazilian health system: history, advances, and challenges. \textit{The Lancet}, v. 377, p. 1778--1797, 2011.
+
+\end{thebibliography}
+
+\end{frame}
+
+% ----------------------------------------------------------
+\begin{frame}{}
+\centering
+
+\vspace{2cm}
+
+{\Huge\color{iesbBlue}\textbf{Obrigado!}}
+
+\vspace{1cm}
+
+{\Large Matheus Lima Ribeiro}
+
+\vspace{0.3cm}
+
+{\normalsize Centro Universitário IESB\\
+Ciência de Dados e Inteligência Artificial\\
+Prof. Sérgio da Costa Côrtes}
+
+\vspace{0.5cm}
+
+{\small 2026/1}
+
+\end{frame}
+
+\end{document}

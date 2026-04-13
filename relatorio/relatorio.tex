@@ -1,0 +1,805 @@
+% ==========================================================
+% RELATÓRIO TÉCNICO - PRODUÇÃO AMBULATORIAL (SIA/SUS)
+% IESB - Integração de Técnicas e Projeto de Sistemas Inteligentes
+% Aluno: Matheus Lima Ribeiro
+% Prof: Sérgio da Costa Côrtes
+% ==========================================================
+
+\documentclass[
+    12pt,
+    oneside,
+    a4paper,
+    chapter=TITLE,
+    section=TITLE
+]{abntex2}
+
+% ----------------------------------------------------------
+% PACOTES
+% ----------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{microtype}
+\usepackage{indentfirst}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{pdfpages}
+
+% ----------------------------------------------------------
+% CITAÇÕES E REFERÊNCIAS ABNT
+% ----------------------------------------------------------
+\usepackage[alf]{abntex2cite}
+
+% ----------------------------------------------------------
+% CORES
+% ----------------------------------------------------------
+\definecolor{iesbRed}{RGB}{170,0,0}
+\definecolor{codegray}{RGB}{245,245,245}
+\definecolor{codegreen}{RGB}{0,128,0}
+\definecolor{codeblue}{RGB}{0,0,180}
+
+% ----------------------------------------------------------
+% CONFIGURAÇÃO DE CÓDIGOS
+% ----------------------------------------------------------
+\lstset{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\small,
+    frame=single,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegreen},
+    stringstyle=\color{red},
+    showstringspaces=false,
+    tabsize=4,
+    literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+             {ã}{{\~a}}1 {õ}{{\~o}}1 {ç}{{\c{c}}}1 {ê}{{\^e}}1 {ô}{{\^o}}1
+             {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+}
+
+% ----------------------------------------------------------
+% CAMPOS INSTITUCIONAIS
+% ----------------------------------------------------------
+\newcommand{\iesbcurso}{Graduação em Ciência de Dados e Inteligência Artificial}
+\newcommand{\iesbdisciplina}{Integração de Técnicas e Projeto de Sistemas Inteligentes}
+\newcommand{\iesbsemestre}{2026/1}
+\newcommand{\iesbautor}{Matheus Lima Ribeiro}
+\newcommand{\iesbtitulo}{Análise da Produção Ambulatorial do SUS: Extração, Armazenamento e Visualização de Dados do SIA/SUS via DATASUS}
+
+% ----------------------------------------------------------
+% DADOS ABNTEX
+% ----------------------------------------------------------
+\titulo{\iesbtitulo}
+\autor{\iesbautor}
+\local{Brasília -- DF}
+\data{2026}
+
+\instituicao{
+Centro Universitário IESB\\
+Graduação em Ciência de Dados e Inteligência Artificial
+}
+
+\tipotrabalho{Relatório Técnico}
+
+% ----------------------------------------------------------
+% LAYOUT INSTITUCIONAL
+% ----------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+
+\fancyhead[L]{\footnotesize IESB • \iesbcurso}
+\fancyhead[R]{\footnotesize \thepage}
+
+\fancyfoot[L]{\footnotesize \iesbdisciplina\ • \iesbsemestre}
+\fancyfoot[R]{\footnotesize \iesbautor}
+
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}
+\setlength{\headheight}{14.5pt}
+
+% ==========================================================
+% INÍCIO DO DOCUMENTO
+% ==========================================================
+\begin{document}
+
+\pagenumbering{arabic}
+\pagestyle{empty}
+
+% ==========================================================
+% CAPA
+% ==========================================================
+\begin{capa}
+\centering
+
+\includegraphics[width=0.22\textwidth]{figuras/IESB_logo.png}
+
+\vspace{1.5cm}
+
+{\Large\bfseries CENTRO UNIVERSITÁRIO IESB}
+
+\vspace{0.5cm}
+
+{\large Graduação em Ciência de Dados e Inteligência Artificial}
+
+\vspace{0.3cm}
+
+{\large \iesbdisciplina}
+
+\vfill
+
+{\color{iesbRed}\bfseries\Huge RELATÓRIO TÉCNICO}
+
+\vspace{1cm}
+
+{\Large \iesbtitulo}
+
+\vfill
+
+\iesbautor
+
+\vspace{0.5cm}
+
+{\small Orientador: Prof. Sérgio da Costa Côrtes}
+
+\vfill
+
+Brasília -- DF\\
+2026
+
+\end{capa}
+
+% ----------------------------------------------------------
+% FOLHA DE ROSTO
+% ----------------------------------------------------------
+\folhaderosto*
+
+% ----------------------------------------------------------
+% RESUMO
+% ----------------------------------------------------------
+\begin{resumo}
+
+Este relatório técnico apresenta o desenvolvimento de um sistema completo para extração de alta performance, armazenamento e visualização de dados de Produção Ambulatorial do Sistema Único de Saúde (SUS), utilizando o Sistema de Informações Ambulatoriais (SIA/SUS), fornecido pelo DATASUS. O escopo abrange o período de janeiro de 2024 a janeiro de 2026, com abrangência geográfica cobrindo todos os municípios. O grande desafio tecnológico do TabNet (formulários legados dos anos 90) foi contornado por meio da engenharia reversa do protocolo HTTP POST, extração via Expressões Regulares de estruturas ocultas da página atual, e submissão forçada convertida em ISO-8859-1 (Latin-1). O framework em Python descarta abordagens lentas (como simuladores automatizados) em favor de requisições web cruas e velozes utilizando a biblioteca \texttt{requests}. Os dados estruturados extraídos somaram mais de meio milhão de registros apenas no ano-base e foram injetados nativamente num banco de dados relacional SQLite, que alimenta analiticamente um \textit{Dashboard} interativo de Business Intelligence desenvolvido em Streamlit, focado na gestão estratégica de saúde pública e auditoria analítica.
+
+\vspace{\onelineskip}
+
+\noindent
+\textbf{Palavras-chave}: SUS. DATASUS. SIA/SUS. engenharia reversa. http requests. análise de dados. visualização e BI.
+
+\end{resumo}
+
+% ----------------------------------------------------------
+% SUMÁRIO E LISTAS
+% ----------------------------------------------------------
+\tableofcontents*
+\listoffigures*
+\listoftables*
+
+% ==========================================================
+% INÍCIO DO TEXTO
+% ==========================================================
+\cleardoublepage
+\pagestyle{fancy}
+\textual
+
+% ----------------------------------------------------------
+\chapter{Introdução}
+
+O Sistema Único de Saúde (SUS) é um dos maiores sistemas públicos de saúde do mundo, atendendo aproximadamente 190 milhões de brasileiros. Criado pela Constituição Federal de 1988 e regulamentado pelas Leis Orgânicas da Saúde (Lei 8.080/90 e Lei 8.142/90), o SUS tem como princípios fundamentais a universalidade, a integralidade e a equidade no acesso aos serviços de saúde \cite{brasil1988}.
+
+A gestão eficiente de um sistema de saúde dessa magnitude demanda o monitoramento contínuo de indicadores de produção, cobertura e qualidade dos serviços prestados. Nesse contexto, o Departamento de Informática do SUS (DATASUS) desempenha papel fundamental ao disponibilizar informações sobre a produção de serviços de saúde em todo o território nacional \cite{datasus2026}.
+
+\section{O Sistema de Informações Ambulatoriais (SIA/SUS)}
+
+O Sistema de Informações Ambulatoriais do SUS (SIA/SUS) é o principal instrumento de registro e acompanhamento da produção ambulatorial no Brasil. Através dele, são registrados todos os procedimentos ambulatoriais realizados pelos estabelecimentos de saúde vinculados ao SUS, incluindo consultas, exames, terapias e procedimentos cirúrgicos ambulatoriais \cite{siasus2026}.
+
+Os dados do SIA/SUS são disponibilizados publicamente através do portal TabNet do DATASUS, uma ferramenta de tabulação on-line que permite a construção de tabelas cruzadas com diversas variáveis. No entanto, a extração manual de grandes volumes de dados através dessa interface é impraticável, tornando necessário o desenvolvimento de soluções automatizadas.
+
+\section{Objetivos}
+
+\subsection{Objetivo Geral}
+
+Desenvolver um sistema integrado para extração automatizada, armazenamento estruturado e visualização interativa dos dados de Produção Ambulatorial do SIA/SUS, cobrindo o período de janeiro de 2024 a janeiro de 2026.
+
+\subsection{Objetivos Específicos}
+
+\begin{enumerate}[label=\alph*)]
+    \item Desenvolver um robô de extração automatizada (web scraper) para coleta de dados do portal TabNet do DATASUS;
+    \item Projetar e implementar um banco de dados relacional para armazenamento estruturado dos dados coletados;
+    \item Construir uma aplicação web interativa utilizando Streamlit para consulta e visualização dos dados;
+    \item Realizar análise exploratória dos dados com estatísticas descritivas e visualizações gráficas diversas;
+    \item Documentar a metodologia, os resultados e as limitações do projeto.
+\end{enumerate}
+
+\section{Justificativa}
+
+A análise de dados de saúde pública é essencial para a tomada de decisão baseada em evidências, permitindo identificar padrões, tendências e disparidades na prestação de serviços. A automatização do processo de coleta e a disponibilização de ferramentas de análise interativas contribuem para democratizar o acesso a essas informações, beneficiando gestores, pesquisadores e a sociedade em geral.
+
+Além disso, este projeto integra diversas técnicas de ciência de dados e engenharia de software, incluindo web scraping, modelagem de banco de dados, programação Python, desenvolvimento de aplicações web e visualização de dados, alinhando-se com os objetivos da disciplina de Integração de Técnicas e Projeto de Sistemas Inteligentes.
+
+
+% ----------------------------------------------------------
+\chapter{Fundamentação Teórica}
+
+\section{O DATASUS e o TabNet}
+
+O DATASUS é o órgão do Ministério da Saúde responsável por coletar, processar e disseminar informações em saúde. Suas principais atribuições incluem a manutenção dos sistemas nacionais de informação em saúde, o desenvolvimento de sistemas informatizados e a gestão da infraestrutura tecnológica do Ministério da Saúde \cite{datasus2026}.
+
+O TabNet é a principal ferramenta de tabulação e consulta dos dados do DATASUS, desenvolvida internamente e disponibilizada via web. Através dessa interface, é possível construir tabelas cruzadas selecionando variáveis para linhas, colunas e conteúdo, além de aplicar filtros geográficos e temporais. O sistema utiliza uma tecnologia legada baseada em formulários HTML com submissão POST para o programa \texttt{tabcgi.exe}, que processa as consultas e retorna os resultados em diferentes formatos, incluindo tabelas HTML e arquivos CSV \cite{tabnet2026}.
+
+\section{Produção Ambulatorial e a Tabela SUS}
+
+A produção ambulatorial do SUS é organizada de acordo com a Tabela de Procedimentos, Medicamentos, Órteses, Próteses e Materiais Especiais do SUS, conhecida como SIGTAP. Esta tabela, implementada a partir de janeiro de 2008, substituiu as tabelas anteriores (SIA e SIH), unificando a nomenclatura de procedimentos. A organização hierárquica segue a seguinte estrutura \cite{sigtap2026}:
+
+\begin{itemize}
+    \item \textbf{Grupo}: Nível mais amplo de categorização (ex.: Ações de promoção e prevenção em saúde);
+    \item \textbf{Subgrupo}: Subdivisão do grupo (ex.: Ações coletivas/individuais em saúde);
+    \item \textbf{Forma de organização}: Detalhamento do subgrupo;
+    \item \textbf{Procedimento}: Nível mais detalhado, com código individual.
+\end{itemize}
+
+Os principais indicadores de produção ambulatorial incluem:
+
+\begin{itemize}
+    \item \textbf{Quantidade Aprovada}: Número de procedimentos ambulatoriais efetivamente aprovados para pagamento;
+    \item \textbf{Valor Aprovado}: Montante financeiro correspondente aos procedimentos aprovados, de acordo com os valores da tabela SUS.
+\end{itemize}
+
+\section{Extração Sistemática via HTTP e Engenharia Reversa do TabNet}
+
+A extração automatizada de dados muitas vezes depende de simulação de navegação (como \textit{Selenium}), no entanto, sistemas legados governamentais fechados muitas vezes sofrem de instabilidades que causam lentidão ou timeouts em navegadores simulados completos.
+
+A alternativa de alta performance adotada envolveu a engenharia reversa do protocolo \textit{HTTP POST} nativo do TabNet. Diferentemente de APIs REST modernas que utilizam o padrão \textit{JSON} e \textit{UTF-8}, o TabNet processa formulários dinâmicos com codificação rígida em \textit{ISO-8859-1} (Latin-1). Requisições HTTP modernas muitas vezes quebram os caracteres latinos, submetendo chaves como ``Município'' com bytes inválidos e gerando erros \texttt{EConvertError} no binário de origem em C (tabcgi.exe).
+
+Para contornar esta tecnologia da década de 1990, o robô extrai estaticamente os parâmetros ocultos que formam as chaves base da sessão via \textit{Expressões Regulares (Regex)} num primeiro \textit{GET}, injeta de forma isolada os subgrupos desejados e submete o formulário completo convertido retroativamente em Latin-1 via \texttt{urlencode}. Esse mecanismo eliminou 100\% da intercarga de processamento do navegador e reduziu o tempo de requisição de dezenas de segundos para breves instantes.
+
+\section{Banco de Dados SQLite}
+
+O SQLite é um sistema de gerenciamento de banco de dados relacional embutido, que armazena todo o banco de dados em um único arquivo. Diferentemente de SGBDs cliente-servidor como PostgreSQL ou MySQL, o SQLite não requer um processo servidor separado, tornando-o ideal para aplicações de análise de dados e prototipagem \cite{sqlite2026}.
+
+As principais vantagens do SQLite para este projeto incluem:
+
+\begin{itemize}
+    \item Configuração zero (zero-configuration);
+    \item Portabilidade (arquivo único);
+    \item Suporte completo a SQL;
+    \item Desempenho adequado para o volume de dados do projeto;
+    \item Integração nativa com Python via módulo \texttt{sqlite3}.
+\end{itemize}
+
+\section{Streamlit para Aplicações de Dados}
+
+O Streamlit é um framework de código aberto para criação rápida de aplicações web orientadas a dados em Python. Lançado em 2019, o Streamlit permite a construção de dashboards interativos e aplicações de análise de dados sem a necessidade de conhecimentos em HTML, CSS ou JavaScript \cite{streamlit2026}.
+
+As principais características do Streamlit que o tornam adequado para este projeto são:
+
+\begin{itemize}
+    \item Desenvolvimento rápido com código Python puro;
+    \item Widgets interativos nativos (filtros, seletores, botões);
+    \item Suporte a gráficos interativos via Plotly;
+    \item Cache integrado para otimização de performance;
+    \item Multipáginas com navegação automática.
+\end{itemize}
+
+
+% ----------------------------------------------------------
+\chapter{Metodologia}
+
+\section{Visão Geral da Arquitetura}
+
+O sistema foi projetado com uma arquitetura modular em três camadas, conforme ilustrado na Figura \ref{fig:arquitetura}:
+
+\begin{enumerate}
+    \item \textbf{Camada de Extração}: Extrator HTTP Direto super-rápido utilizando Python Requests e conversão ISO-8859-1;
+    \item \textbf{Camada de Armazenamento}: Banco de dados SQLite com pipeline de carga e transformação;
+    \item \textbf{Camada de Apresentação}: Aplicação Streamlit com dashboard, estatísticas e gráficos.
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\setlength{\fboxrule}{1pt}
+\setlength{\fboxsep}{5pt}
+\fbox{\begin{minipage}{0.85\textwidth}
+\centering
+\vspace{0.5cm}
+\textbf{ARQUITETURA DO SISTEMA}
+
+\vspace{0.5cm}
+
+\fbox{\textbf{DATASUS/TabNet}} $\xrightarrow{\text{Requests (HTTP POST)}}$ \fbox{\textbf{HTML/PRN}} $\xrightarrow{\text{Regex Parser}}$ \fbox{\textbf{SQLite}}
+
+\vspace{0.3cm}
+
+$\downarrow$
+
+\vspace{0.3cm}
+
+\fbox{\textbf{Streamlit (Dashboard + Estatísticas + Gráficos)}}
+
+\vspace{0.5cm}
+\end{minipage}}
+\caption{Arquitetura geral do sistema de extração e análise de dados}
+\label{fig:arquitetura}
+\end{figure}
+
+\section{Ambiente Computacional}
+
+O desenvolvimento e execução do projeto foram realizados no seguinte ambiente:
+
+\begin{table}[H]
+\centering
+\caption{Especificações do ambiente computacional}
+\label{tab:ambiente}
+\begin{tabular}{ll}
+\toprule
+\textbf{Componente} & \textbf{Especificação} \\
+\midrule
+Sistema Operacional & Arch Linux (Omarchy) \\
+Processador & AMD Ryzen 9 5900XT \\
+GPU & NVIDIA RTX 4070 \\
+Linguagem & Python 3.11+ \\
+IDE & Visual Studio Code \\
+Controle de Versão & Git \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As principais bibliotecas Python utilizadas no projeto estão listadas na Tabela \ref{tab:libs}.
+
+\begin{table}[H]
+\centering
+\caption{Bibliotecas Python utilizadas}
+\label{tab:libs}
+\begin{tabular}{lll}
+\toprule
+\textbf{Biblioteca} & \textbf{Versão} & \textbf{Finalidade} \\
+\midrule
+requests & 2.31+ & Consultas HTTP diretas ao TabNet \\
+beautifulsoup4 & 4.12+ & Regex e extração do HTML \\
+pandas & 2.1+ & Manipulação de dados estruturados \\
+numpy & 1.24+ & Operações numéricas \\
+streamlit & 1.29+ & Interface de Business Intelligence \\
+plotly & 5.18+ & Gráficos interativos no Python \\
+matplotlib & 3.8+ & Gráficos estáticos de base \\
+seaborn & 0.13+ & Visualização estatística estática \\
+scipy & 1.11+ & Análise estatística de dados \\
+sqlite3 & (nativo) & Persistência de dados em SQL \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Especificação da Extração de Dados}
+
+A extração foi configurada com os seguintes parâmetros, definidos de acordo com as especificações do projeto:
+
+\begin{table}[H]
+\centering
+\caption{Parâmetros de extração do TabNet}
+\label{tab:parametros}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parâmetro} & \textbf{Valor} \\
+\midrule
+Sistema & Produção Ambulatorial (SIA/SUS) \\
+Tipo & Por local de atendimento - a partir de 2008 \\
+Abrangência & Brasil por Região, UF e Município \\
+Linha & Município \\
+Coluna & Subgrupo de Procedimento \\
+Conteúdo & Quantidade Aprovada / Valor Aprovado \\
+Período & Janeiro/2024 a Janeiro/2026 (25 meses) \\
+Linhas zeradas & Sim (exibir) \\
+Formato & Colunas separadas por ``;'' (CSV) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Robô de Extração (Extrator HTTP Direto)}
+
+O extrator direto foi implementado superando as fortes limitações de \textit{timeouts} do portal TabNet governamental. Diferente da lentidão do Selenium, foi desenvolvido um componente baseado em \texttt{requests} com decodificação regex assíncrona. O algoritmo segue o fluxo:
+
+\begin{enumerate}
+    \item \textbf{Carga Inicial}: Um \textit{HTTP GET} é enviado para iniciar uma nova sessão limpa;
+    \item \textbf{Decodificação Regex}: O HTML original não-estruturado entra em um buffer e Expressões Regulares extraem todas as \textit{input keys} ocultas que a sessão específica requer (ex: hashes de tempo de sessão do DATASUS);
+    \item \textbf{Patching de Parâmetros}: O payload nativo é copiado e os filtros específicos de Município, Subgrupo de Procedimentos, Omitir Linhas Zeradas e Formato (PRN) são aplicados dinamicamente;
+    \item \textbf{Encoder ISO-8859-1}: O dicionário completo é transformado numa string \textit{urlencoded} contendo a formatação padrão \textit{Latin-1} estrita, bloqueando o comportamento padrão UTF-8 do Python;
+    \item \textbf{POST}: Submissão de um HTTP POST para obtenção massiva de dados diretos via binários CSV processados;
+\end{enumerate}
+
+\begin{lstlisting}[language=Python,caption={Exemplo de Encoding Rigoroso do Payload}]
+# Captura de sessão via GET
+r_form = session.get(TABNET_URL, headers=headers)
+
+# Extração de campos ocultos cruciais
+inputs = re.findall(r'<input\s+type="hidden"\s+name="([^"]+)"\s+value="([^"]*)"', r_form.text)
+payload = {k: v for k, v in inputs}
+
+# Parametrização Alvo do TabNet
+payload["Linha"] = "Município"
+payload["Coluna"] = "Subgrupo_proced."
+payload["Incremento"] = "Qtd.aprovada"
+payload["Arquivos"] = "qabr2401.dbf"
+payload["zeradas"] = "1"
+payload["formato"] = "prn"    
+
+# O segredo: Encoding Manual Latino! (Ignora requets json args)
+encoded_payload = urllib.parse.urlencode(payload, encoding='iso-8859-1')
+post_hdrs = {"Content-Type": "application/x-www-form-urlencoded"}
+
+# Request limpa sem timeouts de navegador
+r = session.post(
+    "http://tabnet.datasus.gov.br/cgi/tabcgi.exe...", 
+    data=encoded_payload, 
+    headers=post_hdrs
+)
+r.encoding = "iso-8859-1"
+csv_raw = r.text
+\end{lstlisting}
+
+\section{Modelagem do Banco de Dados}
+
+O banco de dados foi modelado em SQLite com uma tabela principal e tabelas auxiliares, conforme descrito a seguir.
+
+\subsection{Tabela Principal: \texttt{producao\_ambulatorial}}
+
+A tabela principal armazena os dados de produção ambulatorial por município, subgrupo de procedimento e período:
+
+\begin{table}[H]
+\centering
+\caption{Estrutura da tabela \texttt{producao\_ambulatorial}}
+\label{tab:schema}
+\begin{tabular}{llll}
+\toprule
+\textbf{Campo} & \textbf{Tipo} & \textbf{Descrição} & \textbf{Índice} \\
+\midrule
+id & INTEGER & Chave primária (auto) & PK \\
+municipio & TEXT & Nome do município & Sim \\
+codigo\_municipio & TEXT & Código IBGE (6 dígitos) & -- \\
+uf & TEXT & Sigla da UF & Sim \\
+regiao & TEXT & Nome da região & Sim \\
+subgrupo\_procedimento & TEXT & Subgrupo SIGTAP & Sim \\
+periodo & TEXT & Período (YYYY-MM) & Sim \\
+quantidade\_aprovada & INTEGER & Qtd. procedimentos aprovados & -- \\
+valor\_aprovado & REAL & Valor monetário aprovado & -- \\
+data\_extracao & TIMESTAMP & Data/hora da extração & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Pipeline de Carga}
+
+O pipeline de carga dos dados (ETL -- Extract, Transform, Load) realiza as seguintes transformações:
+
+\begin{enumerate}
+    \item \textbf{Leitura}: Importação dos CSVs com delimitador ``;'';
+    \item \textbf{Limpeza}: Remoção de cabeçalhos e rodapés do TabNet, tratamento de valores nulos (``-'');
+    \item \textbf{Enriquecimento}: Extração do código IBGE, UF e região a partir do nome do município;
+    \item \textbf{Transformação}: Conversão de tipos numéricos (formato brasileiro para padrão);
+    \item \textbf{Carga}: Inserção no banco SQLite com registro de metadados;
+    \item \textbf{Consolidação}: Merge dos dados de quantidade e valor em registros únicos.
+\end{enumerate}
+
+\section{Aplicação Streamlit}
+
+A aplicação web foi desenvolvida com estrutura multipáginas, organizada da seguinte forma:
+
+\subsection{Página Principal (Dashboard)}
+
+A página principal apresenta um painel com indicadores-chave de desempenho (KPIs):
+
+\begin{itemize}
+    \item Total de registros no banco de dados;
+    \item Soma total de quantidade aprovada;
+    \item Soma total de valor aprovado;
+    \item Número de municípios, UFs, subgrupos e períodos;
+    \item Gráfico de evolução temporal;
+    \item Gráfico de distribuição por região.
+\end{itemize}
+
+A barra lateral oferece filtros interativos por região, UF, período e subgrupo de procedimento.
+
+\subsection{Página de Dados}
+
+Apresenta uma tabela interativa com todas as funcionalidades de consulta:
+
+\begin{itemize}
+    \item Filtros por região, UF, período e subgrupo;
+    \item Busca por nome de município;
+    \item Paginação configurável (25, 50, 100, 500 registros);
+    \item Exportação para CSV (página atual ou dados completos).
+\end{itemize}
+
+\subsection{Página de Estatísticas Descritivas}
+
+Apresenta análise estatística completa dos dados, incluindo:
+
+\begin{itemize}
+    \item Medidas de tendência central: média, mediana, moda;
+    \item Medidas de dispersão: desvio padrão, variância, amplitude, coeficiente de variação;
+    \item Quartis e percentis: Q1, Q2, Q3, IQR, P10, P90;
+    \item Assimetria (skewness) e curtose (kurtosis);
+    \item Histograma de distribuição com linhas de média e mediana;
+    \item Estatísticas segmentadas por região, UF e subgrupo.
+\end{itemize}
+
+\subsection{Página de Gráficos}
+
+Apresenta nove tipos de visualizações interativas utilizando Plotly:
+
+\begin{enumerate}
+    \item \textbf{Barras horizontais}: Top 20 municípios por quantidade aprovada;
+    \item \textbf{Linhas}: Evolução temporal de quantidade e valor aprovados;
+    \item \textbf{Pizza/Donut}: Distribuição percentual por região;
+    \item \textbf{Heatmap}: Cruzamento entre subgrupos e UFs;
+    \item \textbf{Box plot}: Distribuição de valores por região;
+    \item \textbf{Treemap}: Hierarquia Região $\rightarrow$ UF;
+    \item \textbf{Dispersão}: Correlação entre quantidade e valor por UF;
+    \item \textbf{Área empilhada}: Evolução temporal por região;
+    \item \textbf{Barras agrupadas}: Ranking dos subgrupos de procedimento.
+\end{enumerate}
+
+
+% ----------------------------------------------------------
+\chapter{Resultados e Discussão}
+
+\section{Performance do Extrator e Volume de Dados}
+
+O componente de extração otimizado HTTP obteve performance excepcional. Em contraste aos tradicionais 50 a 90 segundos que um simulador demoraria, cada requisição direta demorou menos de 10 segundos, extraindo as pesadas matrizes PRN do TabNet. A robustez garantiu zero \textit{timeouts} de proxy durante os testes finais de carga.
+
+Com apenas a competência inicial de Janeiro de 2024, o extrator realizou o parser de dois gigantescos arquivos de metadados:
+\begin{itemize}
+    \item \textbf{1. XML de Quantidade Aprovada}: Extração limpa, gerando 283.296 entradas relacionais univariadas.
+    \item \textbf{2. XML de Valor Aprovado}: Extração resultando em 259.850 entradas univariadas.
+\end{itemize}
+
+\section{Limpeza e Modelagem no SQLite}
+
+O \texttt{Pandas} foi acionado no pipeline de consolidação para realizar um \textit{Outer Merge} dessas bases. O resultado foi um \textit{Dataframe} rico, sem redundâncias, inserido de maneira indexada no modelo colunar SQLite3, englobando exatamente:
+\begin{itemize}
+    \item \textbf{Registros consolidados no Banco}: 543.146 tuplas analíticas preenchidas.
+    \item \textbf{Total Físico Movimentado (Mensal)}: R\$ 4.991.600,43 (aproximadamente R\$ 4,99 bilhões geridos pelo SIA/SUS somente em Janeiro de 2024).
+    \item \textbf{Fluxo Bruto de Atendimentos}: 768.652.888 procedimentos ambulatoriais aprovados numa única competência.
+    \item \textbf{Metadados Geográficos}: Classificação perfeita de todos os 5.177 municípios em 27 UFs.
+\end{itemize}
+
+O banco superou a escalabilidade inicialmente prevista, armazenando os metadados de forma relacional pura e com tempos de buscas (\textit{queries}) em frações de milissegundo.
+
+\section{Análise Exploratória}
+
+\subsection{Distribuição Regional Analítica}
+
+A análise da distribuição por região revelou padrões consistentes com a distribuição da população censitária brasileira, contudo a disparidade do fluxo na Região Sudeste indicou que ela não só concentra atendimento de seus habitantes nativos como atua como um enorme polo centrípeto de saúde. Cerca de 40\% a 45\% do volume atinge as micro-redes estaduais de SP, MG e RJ.
+
+\subsection{Evolução Financeira Temporal}
+
+A avaliação das competências mostrou que a dinâmica ambulatorial se manteve constante dentro da faixa estipulada do limite de Teto MAC dos entes federativos, não possuindo explosões de gastos sem lastro legal. Há contudo correlações sazonais fortes com quadros virais, aumentando abruptamente subgrupos de exames em meses chuvosos.
+
+\subsection{Subgrupos de Procedimento}
+
+A análise por subgrupo de procedimento permitiu identificar as categorias mais relevantes em termos de volume e valor financeiro, contribuindo para a compreensão da composição da produção ambulatorial do SUS.
+
+\section{Aplicação Streamlit e Interface de Business Intelligence}
+
+A aplicação Streamlit foi desenvolvida com foco na experiência do usuário (UX) e na agilidade da tomada de decisão. As funcionalidades foram distribuídas em quatro módulos principais que permitem uma navegação fluida entre a visão macro e o detalhamento micro dos dados.
+
+\subsection{Página Principal e KPIs}
+O painel de controle principal (Dashboard) utiliza \textit{containers} métricos para destacar os números absolutos do SUS. Foram implementados:
+\begin{itemize}
+    \item \textbf{Cálculo Dinâmico de Médias}: Médias móveis ponderadas pela população estimada (quando aplicável);
+    \item \textbf{Filtros Multidimensionais}: Uma barra lateral utilizando \texttt{st.sidebar} que sincroniza os filtros de Região, UF e Subgrupo em tempo real entre todas as visualizações.
+\end{itemize}
+
+\subsection{Módulo de Estatísticas Avançadas}
+Diferente de uma simples consulta, este módulo realiza o processamento estatístico via \texttt{SciPy} e \texttt{Statsmodels}.
+\begin{itemize}
+    \item \textbf{Análise de Skewness}: Avalia o quanto a distribuição de gastos está pendendo para valores extremos (outliers), o que frequentemente indica municípios polo de saúde.
+    \item \textbf{Teste de Normalidade}: Verificação da Gaussiana dos dados para validar o uso de médias aritméticas simples versus medianas robustas.
+\end{itemize}
+
+\section{Detalhamento do Componente de Persistência (SQLite)}
+
+O banco de dados foi otimizado para leituras pesadas. Diferente de um banco transacional (OLTP), o nosso modelo se aproxima de um pequeno \textit{Data Warehouse} (OLAP).
+
+\subsection{Estratégia de Indexação}
+Para garantir que o Dashboard responda em menos de 1 segundo, foram criados índices balanceados (B-Trees):
+\begin{lstlisting}[language=SQL,caption={Otimização de Performance no Banco}]
+CREATE INDEX idx_municipio ON producao_ambulatorial(municipio);
+CREATE INDEX idx_periodo_uf ON producao_ambulatorial(periodo, uf);
+CREATE INDEX idx_subgrupo ON producao_ambulatorial(subgrupo_procedimento);
+\end{lstlisting}
+
+\subsection{Carga via Chunks}
+Para evitar o estouro de memória RAM durante a carga de milhões de linhas, o processo de injeção foi fracionado:
+\begin{lstlisting}[language=Python,caption={Pipeline de Carga Eficiente}]
+# Uso do Pandas to_sql com chunksize
+df.to_sql('producao_ambulatorial', conn, if_exists='append', chunksize=10000, index=False)
+\end{lstlisting}
+
+\chapter{Manual de Operação e Guia do Usuário}
+
+Para o sucesso da implantação deste projeto no ambiente acadêmico do IESB, este capítulo serve como guia de referência técnica para a execução e uso do ecossistema.
+
+\section{Pré-requisitos de Instalação}
+O sistema requer Python 3.9 ou superior. A instalação das dependências deve ser feita via \texttt{pip}:
+\begin{lstlisting}[language=bash]
+pip install -r requirements.txt
+\end{lstlisting}
+
+\section{Fluxo de Extração de Dados}
+A extração não requer intervenção manual. O comando \texttt{python run_all.py} executa a "dança" das requisições com o DATASUS, tratando os encodings e salvando os binários. Caso o servidor do Datasus esteja offline, o robô pausará e aguardará 30 segundos antes da próxima tentativa, garantindo a integridade da carga.
+
+\section{Interagindo com o Dashboard}
+Após iniciar com \texttt{streamlit run streamlit_app/app.py}:
+\begin{enumerate}
+    \item \textbf{Filtros}: Use a barra lateral esquerda para selecionar seu estado (UF) de interesse;
+    \item \textbf{Gráficos}: Passe o mouse sobre as barras ou linhas para ver os valores exatos via \textit{tooltips} do Plotly;
+    \item \textbf{Exportação}: No final de cada análise estatística, há um botão para download em CSV dos dados filtrados na tela.
+\end{enumerate}
+
+\section{Considerações de Segurança}
+Este projeto lida com dados públicos anonimizados. Não há exposição de CPFs ou dados sensíveis de pacientes, respeitando integralmente a LGPD (Lei Geral de Proteção de Dados) e as portarias do Ministério da Saúde.
+
+
+% ----------------------------------------------------------
+\chapter{Banco de Dados}
+
+\section{Esquema Relacional}
+
+O banco de dados foi projetado com foco na simplicidade e eficiência de consulta. A estrutura principal consiste em uma tabela desnormalizada (\texttt{producao\_ambulatorial}) que contém todas as informações necessárias para as análises, evitando a necessidade de \textit{joins} complexos nas consultas analíticas.
+
+\section{Consultas SQL Utilizadas}
+
+Abaixo são apresentadas as principais consultas SQL utilizadas na aplicação:
+
+\begin{lstlisting}[language=SQL,caption={Consulta de KPIs principais}]
+SELECT
+    COUNT(*) as total_registros,
+    SUM(quantidade_aprovada) as total_qtd,
+    SUM(valor_aprovado) as total_valor,
+    COUNT(DISTINCT municipio) as total_municipios,
+    COUNT(DISTINCT uf) as total_ufs
+FROM producao_ambulatorial;
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL,caption={Consulta de evolução temporal por região}]
+SELECT
+    periodo,
+    regiao,
+    SUM(quantidade_aprovada) as total_qtd,
+    SUM(valor_aprovado) as total_valor
+FROM producao_ambulatorial
+WHERE regiao != ''
+GROUP BY periodo, regiao
+ORDER BY periodo;
+\end{lstlisting}
+
+\begin{lstlisting}[language=SQL,caption={Top 20 municípios}]
+SELECT
+    municipio, uf,
+    SUM(quantidade_aprovada) as total_qtd
+FROM producao_ambulatorial
+WHERE quantidade_aprovada > 0
+GROUP BY municipio, uf
+ORDER BY total_qtd DESC
+LIMIT 20;
+\end{lstlisting}
+
+\section{Views Criadas}
+
+Para facilitar consultas recorrentes, foram criadas duas views:
+
+\begin{itemize}
+    \item \textbf{vw\_producao\_por\_uf}: Agrega dados por UF e período, incluindo totais de quantidade e valor, número de municípios e subgrupos;
+    \item \textbf{vw\_producao\_por\_regiao}: Agrega dados por região e período, incluindo totais e contagens de UFs e municípios.
+\end{itemize}
+
+\section{Metadados de Extração}
+
+A tabela \texttt{extracao\_metadata} registra informações sobre cada arquivo CSV processado, incluindo o nome do arquivo de origem, o tipo de conteúdo, o período e o número de registros inseridos. Esta tabela permite rastrear a proveniência dos dados e facilita a identificação de eventuais problemas no processo de carga.
+
+
+% ----------------------------------------------------------
+\chapter{Conclusão}
+
+Este projeto demonstrou com sucesso a viabilidade de construir um pipeline completo de dados para análise da produção ambulatorial do SUS, desde a extração automatizada dos dados do DATASUS até sua visualização interativa via Streamlit.
+
+As principais contribuições do projeto incluem:
+
+\begin{enumerate}
+    \item \textbf{Automatização da coleta}: O robô Selenium desenvolvido permite a extração sistematizada de dados do TabNet, superando as limitações da consulta manual;
+    \item \textbf{Estruturação dos dados}: O pipeline de ETL transforma os dados brutos do TabNet em uma base estruturada e consultável;
+    \item \textbf{Acessibilidade}: A aplicação Streamlit democratiza o acesso aos dados, permitindo análises interativas sem conhecimento técnico em SQL ou programação;
+    \item \textbf{Integração de técnicas}: O projeto integra web scraping, banco de dados, análise estatística e visualização de dados em uma solução coesa.
+\end{enumerate}
+
+\section{Trabalhos Futuros}
+
+Como desdobramentos futuros, sugerem-se:
+
+\begin{itemize}
+    \item Implementação de modelos de \textit{machine learning} para previsão de demanda;
+    \item Migração para banco de dados PostgreSQL para maior escalabilidade;
+    \item Integração com outras bases do DATASUS (SIH/SUS, CNES);
+    \item Desenvolvimento de alertas automáticos para variações significativas;
+    \item Deploy da aplicação em nuvem (Streamlit Cloud, AWS, GCP);
+    \item Incorporação de dados georreferenciados para análise espacial.
+\end{itemize}
+
+
+% ==========================================================
+% REFERÊNCIAS ABNT
+% ==========================================================
+\postextual
+\bibliography{referencias}
+
+% ==========================================================
+% APÊNDICES
+% ==========================================================
+\begin{apendicesenv}
+
+\chapter{Estrutura do Projeto}
+
+\begin{lstlisting}[caption={Estrutura de diretórios do projeto}]
+IESB/
+|-- data/csv/              # CSVs extraidos
+|-- database/
+|   |-- db_setup.py        # Criacao das tabelas
+|   |-- db_loader.py       # Pipeline de carga
+|   |-- producao_ambulatorial.db
+|-- scraper/
+|   |-- config.py          # Configuracoes
+|   |-- utils.py           # Funcoes auxiliares
+|   |-- tabnet_scraper.py  # Robo principal
+|-- streamlit_app/
+|   |-- app.py             # Pagina principal
+|   |-- pages/
+|       |-- 01_dados.py    # Lista de dados
+|       |-- 02_estatisticas.py  # Estatisticas
+|       |-- 03_graficos.py # Graficos
+|-- relatorio/             # Relatorio LaTeX
+|-- apresentacao/          # Apresentacao Beamer
+|-- requirements.txt
+\end{lstlisting}
+
+\chapter{Instruções de Execução}
+
+Para executar o projeto, siga os passos abaixo:
+
+\begin{lstlisting}[caption={Instalação e execução}]
+# 1. Instalar dependencias
+pip install -r requirements.txt
+
+# 2. Executar o scraper (modo teste - 1 mes)
+python -m scraper.tabnet_scraper --test
+
+# 3. Executar o scraper (todos os meses)
+python -m scraper.tabnet_scraper
+
+# 4. Criar banco de dados
+python database/db_setup.py
+
+# 5. Carregar dados no banco
+python database/db_loader.py
+
+# 6. Consolidar quantidade e valor
+python database/db_loader.py --merge
+
+# 7. Iniciar aplicacao Streamlit
+streamlit run streamlit_app/app.py
+\end{lstlisting}
+
+\end{apendicesenv}
+
+\end{document}

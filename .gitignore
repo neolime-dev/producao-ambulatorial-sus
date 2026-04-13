@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Project specifics
+*.log
+data/csv/
+test_*.txt
+*.txt
+!requirements.txt
+
+# LaTeX artifacts (optional, keeping pdf)
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.log
+*.out
+*.bbl
+*.blg
+*.nav
+*.snm
+*.db
+data/csv/
+database/producao_ambulatorial.db
+data/csv/
+.venv/
