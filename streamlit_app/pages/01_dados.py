@@ -14,17 +14,42 @@ from scraper.config import DATABASE_PATH
 
 st.set_page_config(page_title="Dados - SIA/SUS", page_icon="📋", layout="wide")
 
-st.markdown("# 📋 Lista dos Dados Armazenados")
-st.markdown("Visualize todos os registros de produção ambulatorial com filtros interativos.")
+# ============================================================
+# CSS CUSTOMIZADO
+# ============================================================
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap');
+    
+    .main-header {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1E3A8A;
+        margin-bottom: 0.5rem;
+    }
+    .stDataFrame {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="main-header">📋 Repositório de Dados</div>', unsafe_allow_html=True)
+st.markdown("Consulta granular e exportação de registros da produção ambulatorial.")
 st.markdown("---")
 
 
 @st.cache_resource
 def get_conn():
-    if not os.path.exists(DATABASE_PATH):
-        st.error("Banco de dados não encontrado. Execute o scraper primeiro.")
-        st.stop()
-    return sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+    lite_path = os.path.join(os.path.dirname(DATABASE_PATH), "lite_producao_ambulatorial.db")
+    if os.path.exists(DATABASE_PATH):
+        return sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+    if os.path.exists(lite_path):
+        return sqlite3.connect(lite_path, check_same_thread=False)
+    st.error("Banco de dados não encontrado.")
+    st.stop()
 
 
 conn = get_conn()

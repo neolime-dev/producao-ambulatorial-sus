@@ -18,17 +18,44 @@ from scraper.config import DATABASE_PATH
 
 st.set_page_config(page_title="Estatísticas - SIA/SUS", page_icon="📊", layout="wide")
 
-st.markdown("# 📊 Estatísticas Descritivas")
-st.markdown("Análise estatística completa dos dados de produção ambulatorial do SUS.")
+# ============================================================
+# CSS CUSTOMIZADO
+# ============================================================
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap');
+    
+    .main-header {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1E3A8A;
+        margin-bottom: 0.5rem;
+    }
+    .stat-card {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        border-left: 5px solid #3B82F6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="main-header">📊 Inteligência Estatística</div>', unsafe_allow_html=True)
+st.markdown("Análise profunda da variabilidade e distribuição dos dados de produção.")
 st.markdown("---")
 
 
 @st.cache_resource
 def get_conn():
-    if not os.path.exists(DATABASE_PATH):
-        st.error("Banco de dados não encontrado.")
-        st.stop()
-    return sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+    lite_path = os.path.join(os.path.dirname(DATABASE_PATH), "lite_producao_ambulatorial.db")
+    if os.path.exists(DATABASE_PATH):
+        return sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+    if os.path.exists(lite_path):
+        return sqlite3.connect(lite_path, check_same_thread=False)
+    st.error("Banco de dados não encontrado.")
+    st.stop()
 
 
 conn = get_conn()
@@ -309,6 +336,31 @@ if not values_df.empty and not stats_df.empty:
             width="stretch",
             hide_index=True
         )
+
+    # ============================================================
+    # ANÁLISE DE OUTLIERS
+    # ============================================================
+    st.markdown("---")
+    st.markdown("## 🔍 Detecção de Valores Extremos (Outliers)")
+    
+    q1 = valores.quantile(0.25)
+    q3 = valores.quantile(0.75)
+    iqr = q3 - q1
+    limite_superior = q3 + 3.0 * iqr # Outliers extremos
+    
+    outliers_df = pd.read_sql_query(f"""
+        SELECT municipio, uf, regiao, {col_name} as valor
+        FROM producao_ambulatorial
+        WHERE {col_name} > ?
+        ORDER BY {col_name} DESC
+        LIMIT 10
+    """, conn, params=(limite_superior,))
+    
+    if not outliers_df.empty:
+        st.warning(f"Foram identificados registros com valores extremamente altos (acima de {limite_superior:,.2f}). Estes municípios são prováveis polos regionais de saúde.")
+        st.dataframe(outliers_df, width="stretch", hide_index=True)
+    else:
+        st.success("Não foram detectados outliers extremos na amostra atual.")
 
 else:
     st.warning("Nenhum dado encontrado no banco de dados.")

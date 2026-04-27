@@ -31,70 +31,129 @@ st.set_page_config(
 )
 
 # ============================================================
-# CSS CUSTOMIZADO
+# CSS CUSTOMIZADO - PREMIUM DESIGN
 # ============================================================
 st.markdown("""
 <style>
-    /* Tema principal */
-    .main-header {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #1B4F72;
-        text-align: center;
-        padding: 1rem 0;
-        border-bottom: 3px solid #2E86C1;
-        margin-bottom: 1.5rem;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap');
+
+    :root {
+        --primary: #1E40AF;
+        --secondary: #3B82F6;
+        --accent: #10B981;
+        --background: #F8FAFC;
+        --card-bg: rgba(255, 255, 255, 0.8);
     }
-    .sub-header {
-        font-size: 1.1rem;
-        color: #5D6D7E;
+
+    .stApp {
+        background-color: var(--background);
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Glassmorphism Headers */
+    .main-header {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.8rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         text-align: center;
+        padding: 1.5rem 0 0.5rem 0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .sub-header {
+        font-size: 1.2rem;
+        color: #64748B;
+        text-align: center;
+        margin-bottom: 2.5rem;
+        font-weight: 400;
+    }
+
+    /* Premium KPI Cards */
+    .kpi-container {
+        display: flex;
+        gap: 1.5rem;
         margin-bottom: 2rem;
     }
 
-    /* KPI Cards */
     .kpi-card {
-        background: linear-gradient(135deg, #1B4F72 0%, #2E86C1 100%);
-        border-radius: 12px;
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 16px;
         padding: 1.5rem;
-        color: white;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+        flex: 1;
     }
-    .kpi-value {
-        font-size: 2rem;
-        font-weight: 700;
-        margin: 0.5rem 0;
+
+    .kpi-card:hover {
+        transform: translateY(-5px);
     }
-    .kpi-label {
-        font-size: 0.85rem;
-        opacity: 0.9;
+
+    /* Metric refinement */
+    div[data-testid="stMetric"] {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid #E2E8F0;
+    }
+
+    div[data-testid="stMetric"] label {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem !important;
+        color: #64748B !important;
+        font-weight: 600 !important;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.05em;
+    }
+
+    div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.8rem !important;
+        font-weight: 700 !important;
+        color: #1E3A8A !important;
     }
 
     /* Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #F8F9FA;
+        background-color: #FFFFFF;
+        border-right: 1px solid #E2E8F0;
     }
-    [data-testid="stSidebar"] h1 {
-        color: #1B4F72;
-    }
-
-    /* Metric cards refinement */
-    [data-testid="stMetric"] {
-        background-color: #F0F8FF;
-        border-radius: 10px;
-        padding: 15px;
-        border-left: 4px solid #2E86C1;
+    
+    .sidebar-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1E3A8A;
+        margin-bottom: 1rem;
     }
 
+    /* Tabs styling */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+        background: transparent;
+        gap: 12px;
     }
+
     .stTabs [data-baseweb="tab"] {
-        padding: 10px 20px;
-        border-radius: 8px 8px 0 0;
+        background: #E2E8F0;
+        border-radius: 8px;
+        padding: 8px 16px;
+        color: #64748B;
+        border: none;
+    }
+
+    .stTabs [data-baseweb="tab"][aria-selected="true"] {
+        background: #1E40AF;
+        color: white;
+    }
+
+    /* Alert and Toast */
+    .stAlert {
+        border-radius: 12px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -105,12 +164,21 @@ st.markdown("""
 # ============================================================
 @st.cache_resource
 def get_connection():
-    """Retorna conexão com o banco de dados."""
-    if not os.path.exists(DATABASE_PATH):
-        st.error(f"Banco de dados não encontrado: {DATABASE_PATH}")
-        st.info("Execute primeiro o scraper e a carga dos dados.")
-        st.stop()
-    return sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+    """Retorna conexão com o banco de dados (Suporta Fallback Lite)."""
+    lite_path = os.path.join(os.path.dirname(DATABASE_PATH), "lite_producao_ambulatorial.db")
+    
+    # Prioridade 1: Banco Gigante (Produção)
+    if os.path.exists(DATABASE_PATH):
+        return sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+    
+    # Prioridade 2: Banco Lite (Fallback de Emergência)
+    if os.path.exists(lite_path):
+        st.warning("⚠️ Utilizando Banco de Dados LITE (Amostragem). Os valores totais serão reduzidos.")
+        return sqlite3.connect(lite_path, check_same_thread=False)
+        
+    st.error(f"Banco de dados não encontrado: {DATABASE_PATH}")
+    st.info("Execute primeiro o scraper e a carga dos dados.")
+    st.stop()
 
 
 @st.cache_data(ttl=300)
@@ -172,11 +240,16 @@ def format_currency(n):
 
 
 # ============================================================
-# SIDEBAR - FILTROS
+# SIDEBAR - FILTROS E GUIA
 # ============================================================
 with st.sidebar:
-    st.markdown("# 🏥 Filtros")
+    st.markdown('<div class="sidebar-title">🏥 Gestão SIA/SUS</div>', unsafe_allow_html=True)
+    
+    # Modo Apresentação Toggle
+    presentation_mode = st.toggle("🎥 Modo Apresentação", value=False, help="Otimiza a interface para exibição em sala de aula")
+    
     st.markdown("---")
+    st.markdown("### 🔍 Filtros Analíticos")
 
     try:
         regioes, ufs, periodos, subgrupos = get_filter_options()
@@ -189,7 +262,7 @@ with st.sidebar:
         "🌎 Região",
         options=regioes,
         default=[],
-        help="Selecione as regiões"
+        help="Filtrar por grandes regiões do Brasil"
     )
 
     # Filtro de UF
@@ -203,10 +276,10 @@ with st.sidebar:
         uf_options = uf_df["uf"].tolist()
 
     selected_ufs = st.multiselect(
-        "📍 UF",
+        "📍 Unidade Federativa",
         options=uf_options,
         default=[],
-        help="Selecione os estados"
+        help="Selecione estados específicos"
     )
 
     # Filtro de Período
@@ -214,24 +287,30 @@ with st.sidebar:
         "📅 Período",
         options=periodos,
         default=[],
-        help="Selecione os períodos"
+        help="Selecione o intervalo temporal"
     )
 
     # Filtro de Subgrupo
     selected_subgrupos = st.multiselect(
-        "🔬 Subgrupo de Procedimento",
+        "🔬 Subgrupo SIGTAP",
         options=subgrupos,
         default=[],
-        help="Selecione os subgrupos"
+        help="Filtrar por categorias de procedimentos"
     )
 
     st.markdown("---")
-    st.markdown("### ℹ️ Informações")
-    st.markdown("""
-    **Fonte:** DATASUS/TabNet
-    **Sistema:** SIA/SUS
-    **Período:** Jan/2024 - Jan/2026
+    if presentation_mode:
+        st.info("💡 **Dica de Apresentação:** Use os filtros acima para mostrar disparidades regionais entre o Sudeste e o Norte.")
+    
+    st.markdown("### ℹ️ Dados do Sistema")
+    st.caption("""
+    **Fonte:** DATASUS/TabNet (SIA/SUS)
+    **Dataset:** 14.5M+ registros
+    **Período:** 2024 - 2026
     """)
+    
+    if st.button("🔄 Limpar Filtros", use_container_width=True):
+        st.rerun()
 
 
 # ============================================================
@@ -269,8 +348,13 @@ def build_where_clause():
 # ============================================================
 # PÁGINA PRINCIPAL - DASHBOARD
 # ============================================================
-st.markdown('<div class="main-header">🏥 Produção Ambulatorial (SIA/SUS)</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">Sistema de Informações Ambulatoriais do SUS • DATASUS • Jan/2024 a Jan/2026</div>', unsafe_allow_html=True)
+if presentation_mode:
+    st.balloons()
+    st.markdown('<div class="main-header">🏥 Produção Ambulatorial do SUS</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Análise Estratégica de Dados Governamentais • IESB 2026</div>', unsafe_allow_html=True)
+else:
+    st.markdown('<div class="main-header">DATASUS Intelligence</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">Monitoramento de Produção Ambulatorial (SIA/SUS) • Jan/2024 a Jan/2026</div>', unsafe_allow_html=True)
 
 where_clause, params = build_where_clause()
 
@@ -293,42 +377,44 @@ try:
     if not kpi_df.empty:
         row = kpi_df.iloc[0]
 
+        st.markdown('<div class="kpi-container">', unsafe_allow_html=True)
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
             st.metric(
-                "📊 Total de Registros",
+                "📊 Registros",
                 format_number(row["total_registros"]),
-                help="Quantidade total de registros no banco"
+                help="Quantidade total de linhas processadas no banco"
             )
         with col2:
             st.metric(
-                "✅ Qtd. Aprovada Total",
+                "✅ Qtd. Aprovada",
                 format_number(row["total_qtd"] or 0),
-                help="Soma total de procedimentos aprovados"
+                help="Volume total de procedimentos realizados"
             )
         with col3:
             st.metric(
-                "💰 Valor Aprovado Total",
+                "💰 Valor Total",
                 format_currency(row["total_valor"] or 0),
-                help="Soma total do valor aprovado"
+                help="Investimento total aprovado (SIA/SUS)"
             )
         with col4:
             st.metric(
                 "🏙️ Municípios",
                 format_number(row["total_municipios"]),
-                help="Quantidade de municípios nos dados"
+                help="Capilaridade do sistema nos municípios"
             )
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("---")
+        st.markdown("<br>", unsafe_allow_html=True)
 
         col5, col6, col7 = st.columns(3)
         with col5:
-            st.metric("📍 UFs", int(row["total_ufs"]))
+            st.metric("📍 Estados (UFs)", int(row["total_ufs"]))
         with col6:
             st.metric("🔬 Subgrupos", int(row["total_subgrupos"]))
         with col7:
-            st.metric("📅 Períodos", int(row["total_periodos"]))
+            st.metric("📅 Meses Analisados", int(row["total_periodos"]))
 
 except Exception as e:
     st.error(f"Erro ao carregar KPIs: {e}")

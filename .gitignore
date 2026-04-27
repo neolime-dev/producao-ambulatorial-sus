@@ -29,10 +29,17 @@ venv.bak/
 
 # Project specifics
 *.log
-data/csv/
+data/
 test_*.txt
 *.txt
 !requirements.txt
+
+# Databases
+database/*.db
+!database/lite_producao_ambulatorial.db
+
+# Large Zips
+*.zip
 
 # LaTeX artifacts (optional, keeping pdf)
 *.aux
@@ -46,8 +53,3 @@ test_*.txt
 *.blg
 *.nav
 *.snm
-*.db
-data/csv/
-database/producao_ambulatorial.db
-data/csv/
-.venv/

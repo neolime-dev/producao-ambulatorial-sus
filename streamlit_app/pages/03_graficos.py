@@ -18,17 +18,46 @@ from scraper.config import DATABASE_PATH
 
 st.set_page_config(page_title="Gráficos - SIA/SUS", page_icon="📉", layout="wide")
 
-st.markdown("# 📉 Gráficos Diversos")
+# ============================================================
+# CSS CUSTOMIZADO
+# ============================================================
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap');
+    
+    .main-header {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1E3A8A;
+        margin-bottom: 0.5rem;
+    }
+    .chart-insight {
+        background-color: #F8FAFC;
+        border-left: 4px solid #3B82F6;
+        padding: 0.8rem;
+        font-size: 0.9rem;
+        color: #475569;
+        margin-top: 0.5rem;
+        border-radius: 0 8px 8px 0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown('<div class="main-header">📉 Exploração Visual</div>', unsafe_allow_html=True)
 st.markdown("Visualizações interativas dos dados de produção ambulatorial do SUS.")
 st.markdown("---")
 
 
 @st.cache_resource
 def get_conn():
-    if not os.path.exists(DATABASE_PATH):
-        st.error("Banco de dados não encontrado.")
-        st.stop()
-    return sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+    lite_path = os.path.join(os.path.dirname(DATABASE_PATH), "lite_producao_ambulatorial.db")
+    if os.path.exists(DATABASE_PATH):
+        return sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+    if os.path.exists(lite_path):
+        return sqlite3.connect(lite_path, check_same_thread=False)
+    st.error("Banco de dados não encontrado.")
+    st.stop()
 
 
 conn = get_conn()
@@ -69,6 +98,7 @@ if not top_mun.empty:
     fig.update_layout(template="plotly_white", height=600, showlegend=False)
     fig.update_coloraxes(showscale=False)
     st.plotly_chart(fig, width="stretch")
+    st.markdown('<div class="chart-insight">💡 <b>Insight:</b> Municípios capitais tendem a concentrar a maior parte da produção devido à infraestrutura hospitalar de alta complexidade.</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -160,6 +190,8 @@ if not regiao_df.empty:
         fig.update_traces(textposition="inside", textinfo="percent+label")
         fig.update_layout(template="plotly_white", height=450)
         st.plotly_chart(fig, width="stretch")
+
+    st.markdown('<div class="chart-insight">💡 <b>Análise Regional:</b> A disparidade entre as regiões reflete a distribuição demográfica e a rede de atendimento instalada.</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
