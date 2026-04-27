@@ -360,19 +360,28 @@ where_clause, params = build_where_clause()
 
 # KPIs
 try:
-    kpi_query = f"""
-        SELECT
-            COUNT(*) as total_registros,
-            SUM(quantidade_aprovada) as total_qtd,
-            SUM(valor_aprovado) as total_valor,
-            COUNT(DISTINCT municipio) as total_municipios,
-            COUNT(DISTINCT uf) as total_ufs,
-            COUNT(DISTINCT subgrupo_procedimento) as total_subgrupos,
-            COUNT(DISTINCT periodo) as total_periodos
-        FROM producao_ambulatorial
-        WHERE {where_clause}
-    """
-    kpi_df = load_data(kpi_query, params)
+    # Tentar carregar estatísticas originais (Plano B)
+    conn = get_connection()
+    kpi_df = pd.DataFrame()
+    try:
+        kpi_df = pd.read_sql_query("SELECT * FROM original_stats", conn)
+        is_lite = True
+    except:
+        # Se não existir a tabela, calcula do banco atual (Plano A)
+        kpi_query = f"""
+            SELECT 
+                COUNT(*) as total_registros,
+                SUM(quantidade_aprovada) as total_qtd,
+                SUM(valor_aprovado) as total_valor,
+                COUNT(DISTINCT municipio) as total_municipios,
+                COUNT(DISTINCT uf) as total_ufs,
+                COUNT(DISTINCT periodo) as total_periodos,
+                COUNT(DISTINCT subgrupo_procedimento) as total_subgrupos
+            FROM producao_ambulatorial
+            WHERE {where_clause}
+        """
+        kpi_df = load_data(kpi_query, params)
+        is_lite = False
 
     if not kpi_df.empty:
         row = kpi_df.iloc[0]
