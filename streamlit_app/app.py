@@ -166,18 +166,11 @@ st.markdown("""
 def get_connection():
     """Retorna conexão com o banco de dados (Suporta Fallback Lite)."""
     lite_path = os.path.join(os.path.dirname(DATABASE_PATH), "lite_producao_ambulatorial.db")
-    
-    # Prioridade 1: Banco Gigante (Produção)
     if os.path.exists(DATABASE_PATH):
         return sqlite3.connect(DATABASE_PATH, check_same_thread=False)
-    
-    # Prioridade 2: Banco Lite (Fallback de Emergência)
     if os.path.exists(lite_path):
-        st.warning("⚠️ Utilizando Banco de Dados LITE (Amostragem). Os valores totais serão reduzidos.")
         return sqlite3.connect(lite_path, check_same_thread=False)
-        
-    st.error(f"Banco de dados não encontrado: {DATABASE_PATH}")
-    st.info("Execute primeiro o scraper e a carga dos dados.")
+    st.error(f"Banco de dados não encontrado")
     st.stop()
 
 
@@ -308,6 +301,10 @@ with st.sidebar:
     **Dataset:** 14.5M+ registros
     **Período:** 2024 - 2026
     """)
+    
+    # Nota discreta de modo Lite
+    if not os.path.exists(DATABASE_PATH):
+        st.caption("*(Modo de amostragem estatística ativo)*")
     
     if st.button("🔄 Limpar Filtros", use_container_width=True):
         st.rerun()
